@@ -1,6 +1,6 @@
-module PrettyPrinter where
+module Language.PrettyPrinter where
 
-import qualified Language
+import Language.Types as Types
 
 data Iseq
   = INil
@@ -37,6 +37,20 @@ iNewline = INewline
 iIndent :: Iseq -> Iseq
 iIndent = IIndent
 
+iNum :: Int -> Iseq
+iNum n = iStr (show n)
+
+iFWNum :: Int -> Int -> Iseq
+iFWNum width n =
+  iStr (space (width - length digits) ++ digits)
+  where
+    digits = show n
+
+iLayn :: [Iseq] -> Iseq
+iLayn seqs = iConcat (zipWith (curry layItem) [1 ..] seqs)
+  where
+    layItem (n, sq) = iConcat [iFWNum 4 n, iStr ") ", iIndent sq, iNewline]
+
 space :: Int -> [Char]
 space n = replicate n newline
 
@@ -59,17 +73,17 @@ iInterleave _ [] = INil
 iInterleave _ [i] = i
 iInterleave sep (x : xs) = iAppend (iAppend x sep) (iInterleave sep xs)
 
-printAlternatives :: [Language.Alter Language.Name] -> Iseq
+printAlternatives :: [Types.Alternative Types.Name] -> Iseq
 printAlternatives = iConcat . map printAlternative
 
-printAlternative :: Language.Alter Language.Name -> Iseq
+printAlternative :: Types.Alternative Types.Name -> Iseq
 printAlternative _ = iStr "alt" -- need to improve here
 
-printExpression :: Language.CoreExpr -> Iseq
-printExpression (Language.ENum n) = iStr $ show n
-printExpression (Language.EVar v) = iStr v
-printExpression (Language.EAp e1 e2) = printExpression e1 `iAppend` iStr " " `iAppend` printAtomicExpression e2
-printExpression (Language.ELet isrec defns expr) =
+printExpression :: Types.CoreExpr -> Iseq
+printExpression (Types.ENum n) = iStr $ show n
+printExpression (Types.EVar v) = iStr v
+printExpression (Types.EApp e1 e2) = printExpression e1 `iAppend` iStr " " `iAppend` printAtomicExpression e2
+printExpression (Types.ELet isrec defns expr) =
   iConcat
     [ iStr keyword,
       iNewline,
@@ -81,21 +95,21 @@ printExpression (Language.ELet isrec defns expr) =
     ]
   where
     keyword = if isrec then "letrec" else "let"
-printExpression (Language.ECase p es) =
+printExpression (Types.ECase p es) =
   iConcat
     [ iStr "case ",
       printExpression p,
       iStr "of ",
       printAlternatives es
     ]
-printExpression (Language.ELam args body) =
+printExpression (Types.ELam args body) =
   iConcat
     [ iStr "\\",
       iInterleave (iStr " ") (map iStr args),
       iStr " -> ",
       printExpression body
     ]
-printExpression (Language.EConstr tag arity) =
+printExpression (Types.EConstr tag arity) =
   iConcat
     [ iStr "Pack{",
       iStr $ show tag,
@@ -103,21 +117,21 @@ printExpression (Language.EConstr tag arity) =
       iStr $ show arity
     ]
 
-printDefinitions :: [(Language.Name, Language.CoreExpr)] -> Iseq
+printDefinitions :: [(Types.Name, Types.CoreExpr)] -> Iseq
 printDefinitions defns = iInterleave sep (map printDefinition defns)
   where
     sep = iConcat [iStr ";", iNewline]
 
-printDefinition :: (Language.Name, Language.CoreExpr) -> Iseq
+printDefinition :: (Types.Name, Types.CoreExpr) -> Iseq
 printDefinition (name, expr) = iConcat [iStr name, iStr " = ", iIndent (printExpression expr)]
 
-printAtomicExpression :: Language.CoreExpr -> Iseq
+printAtomicExpression :: Types.CoreExpr -> Iseq
 printAtomicExpression e
-  | Language.isAtomicExpr e = printExpression e
+  | Types.isAtomicExpr e = printExpression e
   | otherwise = iStr "(" `iAppend` printExpression e `iAppend` iStr ")"
 
-printSupercombinatorDefinition :: Language.ScDefn Language.Name -> Iseq
-printSupercombinatorDefinition (name, vars, expr) =
+printSupercombinator :: Types.Supercombinator Types.Name -> Iseq
+printSupercombinator (name, vars, expr) =
   iConcat
     [ iStr name,
       iStr " ",
@@ -126,8 +140,8 @@ printSupercombinatorDefinition (name, vars, expr) =
       iIndent (printExpression expr)
     ]
 
-printProgram :: Language.CoreProgram -> Iseq
-printProgram prog = iInterleave (iConcat [iStr ";", iNewline]) (map printSupercombinatorDefinition prog)
+printProgram :: Types.CoreProgram -> Iseq
+printProgram prog = iInterleave (iConcat [iStr ";", iNewline]) (map printSupercombinator prog)
 
-prettyPrint :: Language.CoreProgram -> String
+prettyPrint :: Types.CoreProgram -> String
 prettyPrint = iDisplay . printProgram

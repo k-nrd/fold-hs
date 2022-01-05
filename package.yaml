@@ -4,17 +4,6 @@ version: 0.1.0.0
 # a set of basic libraries used by most apps
 dependencies:
   - base >= 4.7 && < 5
-  - bytestring
-  - containers
-  - directory
-  - filepath
-  - mtl
-  - random
-  - text
-  - time
-  - transformers
-  - unordered-containers
-  - vector
 
 library:
   source-dirs: src

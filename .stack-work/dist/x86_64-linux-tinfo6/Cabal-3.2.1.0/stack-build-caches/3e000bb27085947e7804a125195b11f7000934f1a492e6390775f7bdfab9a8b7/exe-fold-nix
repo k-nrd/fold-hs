@@ -1,0 +1,14 @@
+/home/knrd/projects/haskell/fold-nix/.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.2.1.0/build/fold-nix/autogen/Paths_fold_nix.hs:
+  hash: e3884aeb4116f6c2b0fd6b6b70c1040b186e16c58d7e7a58ed0074c3fed9d24d
+/home/knrd/projects/haskell/fold-nix/.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.2.1.0/build/fold-nix/autogen/cabal_macros.h:
+  hash: e8feec7cdd32a89b84f0959e92258deecbc4564dd16de1a1b0261473a0738d20
+/home/knrd/projects/haskell/fold-nix/package.yaml:
+  hash: 52624e120c7d0cc4891eabd397cdf884d50d7e04903a096b2d601f45645f679d
+/nix/store/am5qwbpriqhp1i9qhp2idid7ympxqb9a-glibc-2.32-46-dev/include/stdc-predef.h:
+  hash: 64fdf694f7b3d51ec6c45c06dcb71ebbe9455742d3ea673012016668853d3bff
+/home/knrd/projects/haskell/fold-nix/bin/Main.hs:
+  hash: d03a583abb074929a3633fefb73cb7b369444165636798fb1427a09a4250a880
+/home/knrd/.stack/programs/x86_64-linux/ghc-tinfo6-8.10.7/lib/ghc-8.10.7/include/ghcversion.h:
+  hash: c013160c9aa8a98f4638616496dce720c23ceca8ef9d6b3212b654642fbda5e4
+/home/knrd/projects/haskell/fold-nix/fold-nix.cabal:
+  hash: 8dfc9edcdec8ef023a3f695560ca91604c14d48c23afde9ff9a35924a9c04b8b

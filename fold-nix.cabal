@@ -12,10 +12,13 @@ build-type:     Simple
 
 library
   exposed-modules:
-      Language
+      Language.Lexer
+      Language.Parser
+      Language.Prelude
+      Language.PrettyPrinter
+      Language.Token
+      Language.Types
       Lib
-      Parser
-      PrettyPrinter
   other-modules:
       Paths_fold_nix
   hs-source-dirs:
@@ -54,17 +57,6 @@ library
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude
   build-depends:
       base >=4.7 && <5
-    , bytestring
-    , containers
-    , directory
-    , filepath
-    , mtl
-    , random
-    , text
-    , time
-    , transformers
-    , unordered-containers
-    , vector
   default-language: Haskell2010
 
 executable fold-nix
@@ -107,18 +99,7 @@ executable fold-nix
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , bytestring
-    , containers
-    , directory
-    , filepath
     , fold-nix
-    , mtl
-    , random
-    , text
-    , time
-    , transformers
-    , unordered-containers
-    , vector
   default-language: Haskell2010
 
 test-suite spec
@@ -162,18 +143,7 @@ test-suite spec
   ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.7 && <5
-    , bytestring
-    , containers
-    , directory
-    , filepath
     , fold-nix
     , hspec
-    , mtl
-    , random
-    , text
-    , time
-    , transformers
-    , unordered-containers
-    , vector
   default-language: Haskell2010
   build-tool-depends: hspec-discover:hspec-discover == 2.*
