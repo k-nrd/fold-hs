@@ -11,14 +11,14 @@ ghc = "8.10.4"
 tools = [
   "cabal-install",
   "cabal2nix",
-  "stack",
+  "ghcid",
   "haskell-language-server",
   "haskellPackages.implicit-hie",
   "haskellPackages.stan",
+  "haskellPackages.fourmolu",
   "hlint",
   "niv",
   "nixpkgs-fmt",
-  "ormolu",
   "treefmt",
 ]
 
