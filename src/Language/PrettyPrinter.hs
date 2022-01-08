@@ -74,10 +74,23 @@ iInterleave _ [i] = i
 iInterleave sep (x : xs) = iAppend (iAppend x sep) (iInterleave sep xs)
 
 printAlternatives :: [Types.Alternative Types.Name] -> Iseq
-printAlternatives = iConcat . map printAlternative
+printAlternatives alts = iConcat 
+  [
+    iNewline, 
+    iInterleave iNewline (map printAlternative alts)
+  ]
 
 printAlternative :: Types.Alternative Types.Name -> Iseq
-printAlternative _ = iStr "alt" -- need to improve here
+printAlternative (i, vars, expr) = iConcat 
+  [
+    iStr "<",
+    iNum i,
+    iStr ">",
+    iInterleave (iStr " ") (map iStr vars),
+    iStr " -> ",
+    printExpression expr,
+    iStr ";"
+  ]
 
 printExpression :: Types.CoreExpr -> Iseq
 printExpression (Types.ENum n) = iStr $ show n
@@ -98,8 +111,8 @@ printExpression (Types.ELet isrec defns expr) =
 printExpression (Types.ECase p es) =
   iConcat
     [ iStr "case ",
-      printExpression p,
-      iStr "of ",
+      printAtomicExpression p,
+      iStr " of ",
       printAlternatives es
     ]
 printExpression (Types.ELam args body) =
@@ -128,7 +141,7 @@ printDefinition (name, expr) = iConcat [iStr name, iStr " = ", iIndent (printExp
 printAtomicExpression :: Types.CoreExpr -> Iseq
 printAtomicExpression e
   | Types.isAtomicExpr e = printExpression e
-  | otherwise = iStr "(" `iAppend` printExpression e `iAppend` iStr ")"
+  | otherwise = iConcat [iStr "(", printExpression e, iStr ")"]
 
 printSupercombinator :: Types.Supercombinator Types.Name -> Iseq
 printSupercombinator (name, vars, expr) =

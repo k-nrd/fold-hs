@@ -33,17 +33,17 @@ lexer ln (c : cs)
   | isDigit c = numToken : lexer ln numRest
   | isAlpha c = varToken : lexer ln varRest
   where
-    numToken = Token {line = ln, literal = c : takeWhile isDigit cs}
-    varToken = Token {line = ln, literal = c : takeWhile isIdentityChar cs}
+    numToken = Token (ln, c : takeWhile isDigit cs)
+    varToken = Token (ln, c : takeWhile isIdentityChar cs)
     numRest = dropWhile isDigit cs
     varRest = dropWhile isIdentityChar cs
 lexer ln (c1 : c2 : cs)
   | opLiteral `elem` doubleOperators = opToken : lexer ln rest
   where
     opLiteral = [c1, c2]
-    opToken = Token {line = ln, literal = opLiteral}
+    opToken = Token (ln, opLiteral)
     rest = cs
 lexer ln (c : cs) = tok : lexer ln cs
   where
-    tok = Token {line = ln, literal = [c]}
+    tok = Token (ln, [c])
 lexer _ [] = []

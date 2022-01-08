@@ -1,7 +1,4 @@
 module Language.Token where
 
-data Token = Token
-  { line :: Int,
-    literal :: String
-  }
+newtype Token = Token (Int, String)
   deriving stock (Show, Eq)

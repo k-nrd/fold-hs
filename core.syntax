@@ -1,0 +1,63 @@
+# Programs
+program 
+  -> sc1 `;` ... `;` scN                      # n >= 1
+
+# Supercombinators
+sc 
+  -> var var1 ... varN `=` expr               # n >= 0
+
+# Expressions
+expr 
+  -> expr aexpr                               # Function Application
+  | expr1 binop expr2                         # Infix binary application
+  | `let` defns `in` expr                     # Local definitions
+  | `letrec` defns `in` expr                  # Local recursive definitions
+  | `case` expr `of` alts                     # Case expression
+  | `\` var1 ... varN `.` expr                # Lambda abstraction (n >= 1)
+  | aexpr                                     # Atomic expression
+
+aexpr
+  -> var                                      # Variable
+  | num                                       # Number
+  | `Pack{` num `,` num `}`                   # Constructor
+  | `(` expr `)`                              # Parenthesized expression
+
+# Definitions
+defns
+  -> defn1 `;` ... `;` defnN                  # n >= 1
+
+defn
+  -> var `=` expr
+
+# Alternatives
+alts
+  -> alt1 `;` ... `;` altN                    # n >= 1
+
+alt
+  -> `<` num `>` var1 ... varN `->` expr      # n >= 0
+
+# Binary Operators
+binop
+  -> arithop | relop | boolop
+  
+arithop
+  -> + | - | * | /
+
+relop
+  -> < | <= | == | != | >= | >
+
+boolop
+  -> & | |
+
+# Variables
+var 
+  -> alpha varch1 ... varchN                  # n >= 0
+
+alpha
+  -> an alphabetic character
+
+varch
+  -> alpha | digit | _
+
+# Numbers
+num -> digit1 ... digitN                      # n >= 1
