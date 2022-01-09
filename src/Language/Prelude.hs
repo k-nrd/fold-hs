@@ -1,6 +1,6 @@
 module Language.Prelude where
 
-import Language.Types as Types
+import Language.Syntax (CoreProgram, Expr (EApp, EVar))
 
 preludeDefs :: CoreProgram
 preludeDefs =

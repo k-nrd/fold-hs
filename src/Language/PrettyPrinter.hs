@@ -1,6 +1,6 @@
 module Language.PrettyPrinter where
 
-import Language.Types as Types
+import Language.Syntax (CoreAlternative, CoreDefinition, CoreExpr, CoreProgram, CoreSupercombinator, Expr (EApp, ECase, EConstr, ELam, ELet, ENum, EVar), isAtomicExpr)
 
 data Iseq
   = INil
@@ -73,30 +73,30 @@ iInterleave _ [] = INil
 iInterleave _ [i] = i
 iInterleave sep (x : xs) = iAppend (iAppend x sep) (iInterleave sep xs)
 
-printAlternatives :: [Types.Alternative Types.Name] -> Iseq
-printAlternatives alts = iConcat 
-  [
-    iNewline, 
-    iInterleave iNewline (map printAlternative alts)
-  ]
+printAlternatives :: [CoreAlternative] -> Iseq
+printAlternatives alts =
+  iConcat
+    [ iNewline,
+      iInterleave iNewline (map printAlternative alts)
+    ]
 
-printAlternative :: Types.Alternative Types.Name -> Iseq
-printAlternative (i, vars, expr) = iConcat 
-  [
-    iStr "<",
-    iNum i,
-    iStr ">",
-    iInterleave (iStr " ") (map iStr vars),
-    iStr " -> ",
-    printExpression expr,
-    iStr ";"
-  ]
+printAlternative :: CoreAlternative -> Iseq
+printAlternative (i, vars, expr) =
+  iConcat
+    [ iStr "<",
+      iNum i,
+      iStr ">",
+      iInterleave (iStr " ") (map iStr vars),
+      iStr " -> ",
+      printExpression expr,
+      iStr ";"
+    ]
 
-printExpression :: Types.CoreExpr -> Iseq
-printExpression (Types.ENum n) = iStr $ show n
-printExpression (Types.EVar v) = iStr v
-printExpression (Types.EApp e1 e2) = printExpression e1 `iAppend` iStr " " `iAppend` printAtomicExpression e2
-printExpression (Types.ELet isrec defns expr) =
+printExpression :: CoreExpr -> Iseq
+printExpression (ENum n) = iStr $ show n
+printExpression (EVar v) = iStr v
+printExpression (EApp e1 e2) = printExpression e1 `iAppend` iStr " " `iAppend` printAtomicExpression e2
+printExpression (ELet isrec defns expr) =
   iConcat
     [ iStr keyword,
       iNewline,
@@ -108,21 +108,21 @@ printExpression (Types.ELet isrec defns expr) =
     ]
   where
     keyword = if isrec then "letrec" else "let"
-printExpression (Types.ECase p es) =
+printExpression (ECase p es) =
   iConcat
     [ iStr "case ",
       printAtomicExpression p,
       iStr " of ",
       printAlternatives es
     ]
-printExpression (Types.ELam args body) =
+printExpression (ELam args body) =
   iConcat
     [ iStr "\\",
       iInterleave (iStr " ") (map iStr args),
       iStr " -> ",
       printExpression body
     ]
-printExpression (Types.EConstr tag arity) =
+printExpression (EConstr tag arity) =
   iConcat
     [ iStr "Pack{",
       iStr $ show tag,
@@ -130,20 +130,20 @@ printExpression (Types.EConstr tag arity) =
       iStr $ show arity
     ]
 
-printDefinitions :: [(Types.Name, Types.CoreExpr)] -> Iseq
+printDefinitions :: [CoreDefinition] -> Iseq
 printDefinitions defns = iInterleave sep (map printDefinition defns)
   where
     sep = iConcat [iStr ";", iNewline]
 
-printDefinition :: (Types.Name, Types.CoreExpr) -> Iseq
+printDefinition :: CoreDefinition -> Iseq
 printDefinition (name, expr) = iConcat [iStr name, iStr " = ", iIndent (printExpression expr)]
 
-printAtomicExpression :: Types.CoreExpr -> Iseq
+printAtomicExpression :: CoreExpr -> Iseq
 printAtomicExpression e
-  | Types.isAtomicExpr e = printExpression e
+  | isAtomicExpr e = printExpression e
   | otherwise = iConcat [iStr "(", printExpression e, iStr ")"]
 
-printSupercombinator :: Types.Supercombinator Types.Name -> Iseq
+printSupercombinator :: CoreSupercombinator -> Iseq
 printSupercombinator (name, vars, expr) =
   iConcat
     [ iStr name,
@@ -153,8 +153,8 @@ printSupercombinator (name, vars, expr) =
       iIndent (printExpression expr)
     ]
 
-printProgram :: Types.CoreProgram -> Iseq
+printProgram :: CoreProgram -> Iseq
 printProgram prog = iInterleave (iConcat [iStr ";", iNewline]) (map printSupercombinator prog)
 
-prettyPrint :: Types.CoreProgram -> String
+prettyPrint :: CoreProgram -> String
 prettyPrint = iDisplay . printProgram

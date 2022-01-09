@@ -1,4 +1,4 @@
-module Language.Types where
+module Language.Syntax where
 
 type Name = String
 
@@ -32,8 +32,8 @@ data Expr a
 
 type CoreExpr = Expr Name
 
-data PartialExpr 
-  = NoOp 
+data PartialExpr
+  = NoOp
   | FoundOp Name CoreExpr
 
 bindersOf :: [(a, b)] -> [a]

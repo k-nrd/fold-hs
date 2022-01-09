@@ -14,10 +14,12 @@ library
   exposed-modules:
       Language.Lexer
       Language.Parser
+      Language.ParserUtils
       Language.Prelude
       Language.PrettyPrinter
+      Language.Syntax
+      Language.TemplateInstantiationMachine
       Language.Token
-      Language.Types
       Lib
   other-modules:
       Paths_fold_nix
