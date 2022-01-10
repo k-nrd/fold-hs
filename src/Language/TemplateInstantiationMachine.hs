@@ -3,7 +3,7 @@ module Language.TemplateInstantiationMachine where
 import Data.List (mapAccumL)
 import Language.Parser (parse)
 import Language.Prelude (preludeDefs)
-import Language.Syntax (CoreExpr, CoreProgram, CoreSupercombinator, Name)
+import Language.Syntax (CoreDefinition, CoreExpr, CoreProgram, CoreSupercombinator, Expr (EApp, ECase, EConstr, ELet, ENum, EVar), Name)
 import Language.Utils (Addr, Assoc, Heap, addrLookup, heapAlloc, heapLookup, initialHeap)
 
 type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
@@ -84,10 +84,8 @@ isDataNode (NumNode _) = True
 isDataNode _ = False
 
 step :: TiState -> TiState
-step state = dispatch (heapLookup heap (head stack))
+step state@(stack, _, heap, _, _) = dispatch (heapLookup heap (head stack))
   where
-    (stack, _, heap, _, _) = state
-
     dispatch (NumNode n) = numStep state n
     dispatch (AppNode a1 a2) = appStep state a1 a2
     dispatch (SupercombinatorNode sc args body) = scStep state sc args body
@@ -99,7 +97,8 @@ appStep :: TiState -> Addr -> Addr -> TiState
 appStep (stack, dump, heap, globals, stats) a1 _ = (a1 : stack, dump, heap, globals, stats)
 
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
-scStep (stack, dump, heap, globals, stats) _ args body = (newStack, dump, newHeap, globals, stats)
+scStep (stack, dump, heap, globals, stats) _ args body =
+  (newStack, dump, newHeap, globals, stats)
   where
     newStack = resultAddr : drop (length args + 1) stack
     (newHeap, resultAddr) = instantiate body heap env
@@ -107,11 +106,27 @@ scStep (stack, dump, heap, globals, stats) _ args body = (newStack, dump, newHea
     argBindings = zip args (getArgs heap stack)
 
 getArgs :: TiHeap -> TiStack -> [Addr]
-getArgs heap (sc : stack) = map getArg stack
+getArgs heap (_ : stack) =
+  map getArg stack
   where
-    getArg addr = arg
-      where
-        (AppNode fn arg) = heapLookup heap addr
+    getArg addr = case heapLookup heap addr of
+      AppNode _ arg -> arg
+      _ -> error "Can't get arg from non-application node"
+getArgs _ _ = error "Can't get args from an empty stack"
 
 instantiate :: CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
-instantiate = undefined
+instantiate (ENum n) heap env = heapAlloc heap (NumNode n)
+instantiate (EApp e1 e2) heap env = heapAlloc heap2 (AppNode a1 a2)
+  where
+    (heap1, a1) = instantiate e1 heap env
+    (heap2, a2) = instantiate e2 heap1 env
+instantiate (EVar v) heap env = (heap, addrLookup env v (error "Undefined name " ++ show v))
+instantiate (EConstr tag arity) heap env = instantiateConstr tag arity heap env
+instantiate (ELet isRec defs body) heap env = instantiateLet isRec defs body heap env
+instantiate (ECase expr alts) heap env = error "Can't instantiate case expressions"
+
+instantiateConstr :: Int -> Int -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
+instantiateConstr = undefined
+
+instantiateLet :: Bool -> [CoreDefinition] -> CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
+instantiateLet = undefined
