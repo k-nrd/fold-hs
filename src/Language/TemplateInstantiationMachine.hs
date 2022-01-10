@@ -3,6 +3,7 @@ module Language.TemplateInstantiationMachine where
 import Data.List (mapAccumL)
 import Language.Parser (parse)
 import Language.Prelude (preludeDefs)
+import Language.PrettyPrinter (Iseq, iAppend, iConcat, iDisplay, iIndent, iInterleave, iLayn, iNewline, iNum, iStr, space)
 import Language.Syntax (CoreDefinition, CoreExpr, CoreProgram, CoreSupercombinator, Expr (EApp, ECase, EConstr, ELet, ENum, EVar), Name)
 import Language.Utils (Addr, Assoc, Heap, addrLookup, heapAlloc, heapLookup, initialHeap)
 
@@ -52,13 +53,74 @@ eval state = state : restStates
     nextState = doAdmin (step state)
 
 showResults :: [TiState] -> String
-showResults = undefined
+showResults states = iDisplay (iConcat [iLayn (map showState states), showStats (last states)])
 
-tiStatsIncStep :: TiStats -> TiStats
-tiStatsIncStep s = s + 1
+showState :: TiState -> Iseq
+showState (stack, _, heap, _, _) = iConcat [showStack heap stack, iNewline]
 
-tiStatsGetStep :: TiStats -> Int
-tiStatsGetStep s = s
+showStack :: TiHeap -> TiStack -> Iseq
+showStack heap stack =
+  iConcat
+    [ iStr "Stack [",
+      iNewline,
+      iInterleave iNewline (map showStackItem stack),
+      iNewline,
+      iIndent $ iStr " ]"
+    ]
+  where
+    showStackItem addr =
+      iConcat
+        [ showFWAddr addr,
+          iStr ": ",
+          showStackNode heap (heapLookup heap addr)
+        ]
+
+showStackNode :: TiHeap -> Node -> Iseq
+showStackNode heap (AppNode fnAddr argAddr) =
+  iConcat
+    [ iStr "AppNode ",
+      showFWAddr fnAddr,
+      iStr " ",
+      showFWAddr argAddr,
+      iStr "(",
+      showNode (heapLookup heap argAddr),
+      iStr ")"
+    ]
+showStackNode _ node = showNode node
+
+showNode :: Node -> Iseq
+showNode (AppNode a1 a2) =
+  iConcat
+    [ iStr "AppNode ",
+      showAddr a1,
+      iStr " ",
+      showAddr a2
+    ]
+showNode (SupercombinatorNode name _ _) = iStr ("SupercombinatorNode " ++ name)
+showNode (NumNode n) = iStr "NumNode " `iAppend` iNum n
+
+showAddr :: Addr -> Iseq
+showAddr addr = iStr (show addr)
+
+showFWAddr :: Addr -> Iseq
+showFWAddr addr = iStr (space (4 - length str) ++ str)
+  where
+    str = show addr
+
+showStats :: TiState -> Iseq
+showStats (_, _, _, _, stats) =
+  iConcat
+    [ iNewline,
+      iNewline,
+      iStr "Total number of steps = ",
+      iNum (tiStatsGetSteps stats)
+    ]
+
+tiStatsIncSteps :: TiStats -> TiStats
+tiStatsIncSteps s = s + 1
+
+tiStatsGetSteps :: TiStats -> Int
+tiStatsGetSteps s = s
 
 applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
 applyToStats fn (stack, dump, heap, scDefs, stats) = (stack, dump, heap, scDefs, fn stats)
@@ -72,7 +134,7 @@ allocateSupercombinator heap (name, args, body) = (heap', (name, addr))
     (heap', addr) = heapAlloc heap (SupercombinatorNode name args body)
 
 doAdmin :: TiState -> TiState
-doAdmin = applyToStats tiStatsIncStep
+doAdmin = applyToStats tiStatsIncSteps
 
 tiFinal :: TiState -> Bool
 tiFinal ([soleAddr], _, heap, _, _) = isDataNode (heapLookup heap soleAddr)
@@ -115,18 +177,19 @@ getArgs heap (_ : stack) =
 getArgs _ _ = error "Can't get args from an empty stack"
 
 instantiate :: CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
-instantiate (ENum n) heap env = heapAlloc heap (NumNode n)
+instantiate (ENum n) heap _ = heapAlloc heap (NumNode n)
 instantiate (EApp e1 e2) heap env = heapAlloc heap2 (AppNode a1 a2)
   where
     (heap1, a1) = instantiate e1 heap env
     (heap2, a2) = instantiate e2 heap1 env
-instantiate (EVar v) heap env = (heap, addrLookup env v (error "Undefined name " ++ show v))
+instantiate (EVar v) heap env = (heap, addrLookup env v (error ("Undefined name " ++ show v)))
 instantiate (EConstr tag arity) heap env = instantiateConstr tag arity heap env
 instantiate (ELet isRec defs body) heap env = instantiateLet isRec defs body heap env
-instantiate (ECase expr alts) heap env = error "Can't instantiate case expressions"
+instantiate (ECase _ _) _ _ = error "Can't instantiate case expressions"
+instantiate _ _ _ = error "Can't instantiate lambda expressions"
 
 instantiateConstr :: Int -> Int -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
-instantiateConstr = undefined
+instantiateConstr = error "Can't instantiate constructors"
 
 instantiateLet :: Bool -> [CoreDefinition] -> CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
-instantiateLet = undefined
+instantiateLet = error "Can't instantiate let(rec) expressions"

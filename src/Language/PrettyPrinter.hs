@@ -52,7 +52,7 @@ iLayn seqs = iConcat (zipWith (curry layItem) [1 ..] seqs)
     layItem (n, sq) = iConcat [iFWNum 4 n, iStr ") ", iIndent sq, iNewline]
 
 space :: Int -> [Char]
-space n = replicate n newline
+space n = replicate n ' '
 
 flatten :: Int -> [(Iseq, Int)] -> String
 flatten _ [] = ""
